@@ -1,3 +1,4 @@
+import Bookings from "../models/BookingSchema.js";
 import Doctor from "../models/DoctorSchema.js";
 export const updateDoctor=async(req,res)=>{
     const id=req.params.id;
@@ -69,3 +70,22 @@ export const FindAllDoctor=async(req,res)=>{
 }
 
 
+
+
+
+export const findDoctorProfile=async(req,res)=>{
+    const doctorId=req.userId;
+  
+
+    try {
+        const finddoctorById= await Doctor.findById(doctorId).select('-password');
+        if(!finddoctorById){
+            res.status(500).json({success:false,message:"Doctor Not Found!..."});
+        }
+        const appointments =await Bookings.find({doctor:doctorId});
+        res.status(200).json({success:true,message:"Profile Info is Getting...",data:finddoctorById});
+        
+    } catch (error) {
+        res.status(500).json({success:false,message:"Something Went Wrong..."});
+    }
+}

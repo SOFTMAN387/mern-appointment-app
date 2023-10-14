@@ -2,8 +2,16 @@ import {useEffect,useRef} from 'react'
 import logo from "../../assets/images/logo.png"
 import {NavLink,Link} from "react-router-dom"
 import {BiMenu} from "react-icons/bi"
-import userImg from "../../assets/images/avatar-icon.png"
+import { useSelector } from 'react-redux/es/hooks/useSelector'
+// import userImg from "../../assets/images/avatar-icon.png"
+import { actions } from '../../redux/Reducers/authReducer'
+import { useDispatch } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
 const Header = () => {
+  const dispatch=useDispatch();
+  const navigate=useNavigate();
+  const loginData = useSelector((state) => state.currentUser[0]) || [];
+  // console.log(loginData);
   const navLinks=[
     {
       path:"/home",
@@ -41,6 +49,12 @@ const Header = () => {
     return ()=>window.removeEventListener('scroll',handleStickyHeader)
   })
   const toggleMenu=()=>menuRef.current.classList.toggle('show__menu');
+  const logout=()=>{
+    // localStorage.removeItem('userData');
+    // navigate("/login");
+    dispatch(actions.logoutUser());
+    navigate("/login");
+  }
   return (
 <>
 <header className='header flex items-center' ref={headerRef}>
@@ -71,16 +85,25 @@ const Header = () => {
         </div>
          {/* ===========Nav Right============*/}
          <div className='items-center flex gap-4'>
-          <div className='hidden'>
-            <Link to="/">
+         {loginData?.token && <div >
+            <Link to={`${loginData?.role==='doctor'?'/doctor/profile/me':'/users/profile/me'}`}>
               <figure className='w-[35px] rounded-full '>
-                <img src={userImg} alt='' className='w-full rounded-full'/>
+                <img src={loginData?.data.photo} alt='' className='w-full rounded-full'/>
               </figure>
             </Link>
-          </div>
-          <Link to="/login">
-            <button className='bg-primaryColor py-2 px-6 text-white font-[600] h-[44px] flex overflow-hidden items-center justify-center rounded-[50px]'>Login</button>
-          </Link>
+          </div> }
+         
+         
+          {loginData?.length===0?(
+             <Link to="/login">
+             <button className='bg-primaryColor py-2 px-6 text-white font-[600] h-[44px] flex overflow-hidden items-center justify-center rounded-[50px]'>Login</button>
+           </Link>
+          ):(
+           
+            <button className='bg-primaryColor py-2 px-6 text-white font-[600] h-[44px] flex overflow-hidden items-center justify-center rounded-[50px]'  onClick={logout}>LogOut</button>
+         
+          )}
+         
           <span className='md:hidden' onClick={toggleMenu}>
             <BiMenu className='w-6 h-6 cursor-pointer'/>
           </span>

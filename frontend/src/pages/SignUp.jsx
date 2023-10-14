@@ -1,10 +1,16 @@
 import {useState} from 'react'
 import signupImg from "../assets/images/signup.gif";
-import { Link } from 'react-router-dom';
-import avatarImg from "../assets/images/doctor-img01.png";
+import { Link,useNavigate} from 'react-router-dom';
+// import avatarImg from "../assets/images/doctor-img01.png";
+import uploadImageToCloudinary from '../../utils/uploadCloudinary';
+import HashLoader from "react-spinners/HashLoader";
+import { BASE_URL } from '../../config';
+import { toast } from 'react-toastify';
 const SignUp = () => {
   const [selectFile,setFile]=useState(null);
   const [previewUrl,setPreviewUrl]=useState('');
+  const [loading,setLoading]=useState(false);
+  const navigate=useNavigate();
   const [formData,setFormData]=useState({
     name:'',
     email:"",
@@ -18,10 +24,36 @@ const SignUp = () => {
   }
   const handleFileInputChang=async(e)=>{
     const file= e.target.files[0];
-    console.log(file);
+    const data=await uploadImageToCloudinary(file);
+    setPreviewUrl(data.url);
+    setFile(data.url);
+    setFormData({...formData,photo:data.url})
+    console.log(data);
   }
   const handleSubmit=async(e)=>{
     e.preventDefault();
+    setLoading(true);
+    try {
+      const res=await fetch(`${BASE_URL}/api/v1/auth/register`,{
+        method:'post',
+        headers:{
+          'Content-Type':'application/json'
+        },
+        body: JSON.stringify(formData)
+      })
+      const {message}=await res.json();
+      if(!res.ok){
+        throw new Error(message);
+      }
+
+      setLoading(false);
+      toast.success(message);
+      navigate('/login');
+      
+    } catch (err) {
+      toast.error(err.message);
+      setLoading(false);
+    }
 
   }
   return (
@@ -97,11 +129,11 @@ const SignUp = () => {
         </label>
       </div>
       <div className='mb-5 flex items-center gap-3'>
-        <figure className='w-[60px] h-[60px] rounded-full border-2 border-solid border-primaryColor flex
+       {selectFile && <figure className='w-[60px] h-[60px] rounded-full border-2 border-solid border-primaryColor flex
         items-center jsutify-center'>
-          <img src={avatarImg} alt='' className='w-full rounded-full' />
+          <img src={previewUrl} alt='' className='w-full rounded-full' />
 
-        </figure>
+        </figure>}
         <div className='relative w-[130px] h-[50px] '>
           <input type='file' 
             onChange={handleFileInputChang}
@@ -114,8 +146,8 @@ const SignUp = () => {
             </label>
         </div>
       </div>
-      <div className='mt-2'>
-        <button className='w-full bg-primaryColor text-white text-[18px] leading-[30px] rounded-lg px-4 py-2'>Login</button>
+      <div className='mt-7'>
+        <button disabled={loading && true} className='w-full bg-primaryColor text-white text-[18px] leading-[30px] rounded-lg px-4 py-2'>{loading ? <HashLoader size={35} color='#fffffff' />: "Sign Up"}</button>
       </div>
       <p className='mt-5 text-textColor text-center'>Already have an account ? <Link to="/login" className=' text-primaryColor font-medium ml-1 cursor-pointer'>Login here</Link></p>
           </form>
